@@ -131,7 +131,7 @@ function configureBouquetTexture(texture: THREE.Texture) {
   texture.needsUpdate = true
 }
 const flowerImages = ['/images/bouquet.webp', '/images/roses.webp', '/images/tulips.webp', '/images/daisies.webp', '/images/lilies.webp']
-function Bouquet({ position, scale, tilt, paused, index, bare }: { position: [number,number,number]; scale: number; tilt: number; paused: boolean; index: number; bare: boolean }) {
+function Bouquet({ position, scale, tilt, paused, index, bare, distant, mobile }: { position: [number,number,number]; scale: number; tilt: number; paused: boolean; index: number; bare: boolean; distant: boolean; mobile: boolean }) {
   const image = useTexture(flowerImages[index % flowerImages.length], configureBouquetTexture)
   const group = useRef<THREE.Group>(null)
   const time = useRef(index * 2)
@@ -143,8 +143,18 @@ function Bouquet({ position, scale, tilt, paused, index, bare }: { position: [nu
     shape.quadraticCurveTo(-w,h,-w,h-r);shape.lineTo(-w,-h+r);shape.quadraticCurveTo(-w,-h,-w+r,-h)
     return shape.getPoints(12).map(p=>new THREE.Vector3(p.x,p.y,0))
   },[])
-  useFrame((_, d)=> { if(!paused && group.current){time.current+=d;group.current.position.y=Math.sin(time.current*.45)*.09;group.current.rotation.z=tilt+Math.sin(time.current*.3)*.018} })
-  return <Billboard position={position} scale={scale}><group ref={group} rotation={[0,0,tilt]}>
+  useFrame(({camera}, d)=> {
+    if (!group.current) return
+    const reveal = distant ? THREE.MathUtils.smoothstep(camera.position.length(), mobile ? 23 : 19, mobile ? 33 : 29) : 1
+    group.current.visible = reveal > .01
+    group.current.scale.setScalar(reveal)
+    if (!paused) {
+      time.current += d
+      group.current.position.y = Math.sin(time.current * .45) * .09
+      group.current.rotation.z = tilt + Math.sin(time.current * .3) * .018
+    }
+  })
+  return <Billboard position={position} scale={scale}><group ref={group} rotation={[0,0,tilt]} visible={!distant}>
     {!bare && <><mesh position={[0,0,-.015]}><planeGeometry args={[1.87,2.25]}/><meshBasicMaterial color="#120b10" transparent opacity={.74}/></mesh>
     <Line points={border} color={new THREE.Color(1.45,.84,.24)} lineWidth={1.2}/></>}
     <mesh position={[0,.08,.025]}><planeGeometry args={[1.9,1.98]}/><shaderMaterial uniforms={uniforms} vertexShader={bouquetVertex} fragmentShader={bouquetFragment} transparent depthWrite={false} side={THREE.DoubleSide}/></mesh>
@@ -163,9 +173,30 @@ function Camera({mobile,reset}:{mobile:boolean;reset:number}) {
   },[camera,mobile,reset])
   return <OrbitControls ref={ref} enablePan enableDamping dampingFactor={.07} rotateSpeed={.55} zoomSpeed={.65} screenSpacePanning/>
 }
+type Arrangement = [number,number,number,number,number]
+function distantFlowers(mobile: boolean): Arrangement[] {
+  const rand = random(2187)
+  const flowers: Arrangement[] = []
+  const count = mobile ? 28 : 68
+  const width = mobile ? 19 : 32
+  const height = mobile ? 12 : 14
+  const spacing = mobile ? 2.9 : 3.5
+  for (let tries = 0; flowers.length < count && tries < 8000; tries++) {
+    const x = (rand() * 2 - 1) * width
+    const y = (rand() * 2 - 1) * height
+    // Keep the main orbit legible, then populate the space revealed by zooming out.
+    if ((x / (mobile ? 6.6 : 11)) ** 2 + (y / (mobile ? 5 : 6.3)) ** 2 < 1) continue
+    if (flowers.some(([fx, fy]) => (fx - x) ** 2 + (fy - y) ** 2 < spacing ** 2)) continue
+    const z = -4 - rand() * 11
+    const scale = .68 + rand() * .28 + Math.min(Math.hypot(x, y) / 70, .27)
+    flowers.push([x, y, z, scale, (rand() - .5) * .23])
+  }
+  return flowers
+}
 export function Universe({ paused, reset, onReady }: { paused: boolean; reset: number; onReady: () => void }) {
   useEffect(onReady, [onReady])
   const mobile = useThree(s=>s.size.width < 700)
+  const outerFlowers = useMemo(() => distantFlowers(mobile), [mobile])
   // Staggered arcs leave breathing room around the orb and its monogram.
   const arrangements: [number,number,number,number,number][] = mobile ? [
     [-3.8,1.8,-3,.6,-.12], [3.8,1.8,-3,.6,.11],
@@ -190,7 +221,7 @@ export function Universe({ paused, reset, onReady }: { paused: boolean; reset: n
   return <>
     <Nebula/><ParticleSea mobile={mobile} paused={paused}/><GoldenOrb paused={paused}/>
     <Html center position={[0,3.75,0]} style={{pointerEvents:'none'}}><span className="orb-monogram" aria-label="J con corazón"><span className="orb-initial">J</span><span className="orb-heart" aria-hidden="true">♥</span></span></Html>
-    {arrangements.map(([x,y,z,s,t],i)=><Bouquet key={`${mobile}-${i}`} position={[x,y,z]} scale={s} tilt={t} paused={paused} index={i} bare={i >= 6 && i % 3 === 0}/>)}
+    {[...arrangements,...outerFlowers].map(([x,y,z,s,t],i)=><Bouquet key={`${mobile}-${i}`} position={[x,y,z]} scale={s} tilt={t} paused={paused} index={i} bare={i >= arrangements.length ? i % 2 === 0 : i >= 6 && i % 3 === 0} distant={i >= arrangements.length} mobile={mobile}/>)}
     <Camera mobile={mobile} reset={reset}/>
   </>
 }
