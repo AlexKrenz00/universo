@@ -177,18 +177,19 @@ type Arrangement = [number,number,number,number,number]
 function distantFlowers(mobile: boolean): Arrangement[] {
   const rand = random(2187)
   const flowers: Arrangement[] = []
-  const count = mobile ? 28 : 68
-  const width = mobile ? 19 : 32
-  const height = mobile ? 12 : 14
-  const spacing = mobile ? 2.9 : 3.5
-  for (let tries = 0; flowers.length < count && tries < 8000; tries++) {
+  const count = mobile ? 42 : 100
+  const width = mobile ? 22 : 35
+  const height = mobile ? 15 : 19
+  const depth = mobile ? 14 : 23
+  const spacing = mobile ? 3.5 : 4.2
+  for (let tries = 0; flowers.length < count && tries < 12000; tries++) {
     const x = (rand() * 2 - 1) * width
     const y = (rand() * 2 - 1) * height
-    // Keep the main orbit legible, then populate the space revealed by zooming out.
-    if ((x / (mobile ? 6.6 : 11)) ** 2 + (y / (mobile ? 5 : 6.3)) ** 2 < 1) continue
-    if (flowers.some(([fx, fy]) => (fx - x) ** 2 + (fy - y) ** 2 < spacing ** 2)) continue
-    const z = -4 - rand() * 11
-    const scale = .68 + rand() * .28 + Math.min(Math.hypot(x, y) / 70, .27)
+    const z = (rand() * 2 - 1) * depth
+    // A three-dimensional cloud stays spread out when the camera rotates.
+    if ((x / 11) ** 2 + (y / 7) ** 2 + (z / 9) ** 2 < 1) continue
+    if (flowers.some(([fx, fy, fz]) => (fx - x) ** 2 + (fy - y) ** 2 + (fz - z) ** 2 < spacing ** 2)) continue
+    const scale = .6 + rand() * .27 + Math.min(Math.hypot(x, y, z) / 95, .3)
     flowers.push([x, y, z, scale, (rand() - .5) * .23])
   }
   return flowers
@@ -201,7 +202,8 @@ export function Universe({ paused, reset, onReady }: { paused: boolean; reset: n
   const arrangements: [number,number,number,number,number][] = mobile ? [
     [-3.8,1.8,-3,.6,-.12], [3.8,1.8,-3,.6,.11],
     [-3.65,-.65,.5,.67,-.08], [3.65,-.65,.5,.67,.08],
-    [-1.85,-2.55,2.5,.68,-.06], [1.85,-2.55,2.5,.68,.06],
+    [-1.75,-1.1,3.1,.62,-.06], [1.75,-1.1,3.1,.62,.06],
+    [0,-1.6,3.8,.53,0],
     [-5.2,-1.2,-3,.52,-.1], [5.2,-1.2,-3,.52,.1],
     [-2.55,3,-5,.47,-.06], [2.55,3,-5,.47,.06],
     [-5.4,3,-7,.46,-.12], [5.4,3,-7,.46,.12],
@@ -213,7 +215,8 @@ export function Universe({ paused, reset, onReady }: { paused: boolean; reset: n
     [-6.8,-1,-1,.67,-.1], [6.8,-1,-1,.67,.1],
     [-4.5,.15,.2,.76,-.07], [4.5,.15,.2,.76,.07],
     [-3.25,-2,1.4,.8,-.06], [3.25,-2,1.4,.8,.06],
-    [-1.65,-2.55,3,.7,-.04], [1.65,-2.55,3,.7,.04],
+    [-2,-1.15,3.3,.72,-.04], [2,-1.15,3.3,.72,.04],
+    [0,-1.55,4,.63,0],
     [-9.7,3,-7,.46,-.1], [9.7,3,-7,.46,.1],
     [-9.2,-2,-5,.5,-.12], [9.2,-2,-5,.5,.12],
     [-8,-3.1,-6,.46,-.07], [8,-3.1,-6,.46,.07],
