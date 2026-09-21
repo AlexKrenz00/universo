@@ -2,5 +2,7 @@
 
 .universe::after{content:"";position:absolute;z-index:1;bottom:0;left:0;right:0;height:20%;background:linear-gradient(transparent,#08040ae6);pointer-events:none}
 
-.orb-initial{display:block;font-family:Georgia,serif;font-size:70px;font-style:italic;font-weight:400;line-height:1;color:#ffe8aa;text-shadow:0 0 10px #ffc957,0 0 28px #e8a934,0 0 56px #c57629;user-select:none;white-space:nowrap}
-@media(max-width:700px){.orb-initial{font-size:54px}}
+.orb-monogram{display:flex;align-items:center;justify-content:center;filter:drop-shadow(0 0 14px #da9b3e99);user-select:none;white-space:nowrap}
+.orb-initial{display:block;font-family:Georgia,serif;font-size:83px;font-style:italic;font-weight:400;line-height:1;color:#ffebb9;text-shadow:0 0 9px #fff1bd,0 0 25px #efb43f,0 0 48px #b36c26}
+.orb-heart{display:block;margin-left:-5px;margin-top:-8px;font-family:Georgia,serif;font-size:25px;line-height:1;color:#e99aaa;text-shadow:0 0 8px #ffb7bb,0 0 22px #ed738b;transform:rotate(-13deg)}
+@media(max-width:700px){.orb-initial{font-size:65px}.orb-heart{font-size:21px}}
