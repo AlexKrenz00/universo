@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
-import { Billboard, Line, OrbitControls, useTexture } from '@react-three/drei'
+import { Billboard, Html, Line, OrbitControls, useTexture } from '@react-three/drei'
 import type { OrbitControls as Controls } from 'three-stdlib'
 import * as THREE from 'three'
 
@@ -130,8 +130,9 @@ function configureBouquetTexture(texture: THREE.Texture) {
   texture.colorSpace = THREE.SRGBColorSpace
   texture.needsUpdate = true
 }
+const flowerImages = ['/images/bouquet.webp', '/images/roses.webp', '/images/tulips.webp', '/images/daisies.webp', '/images/lilies.webp']
 function Bouquet({ position, scale, tilt, paused, index, bare }: { position: [number,number,number]; scale: number; tilt: number; paused: boolean; index: number; bare: boolean }) {
-  const image = useTexture(index % 3 === 1 ? '/images/roses.webp' : '/images/bouquet.webp', configureBouquetTexture)
+  const image = useTexture(flowerImages[index % flowerImages.length], configureBouquetTexture)
   const group = useRef<THREE.Group>(null)
   const time = useRef(index * 2)
   const uniforms = useMemo(() => ({ picture: { value: image } }),[image])
@@ -173,6 +174,10 @@ export function Universe({ paused, reset, onReady }: { paused: boolean; reset: n
     [-3.8,2.5,-5,.6,-.13], [3.8,2.4,-5,.6,.11],
     [-2.7,-1.75,1,.58,-.15], [2.7,-1.7,1,.58,.15],
     [-.9,2.6,-3,.55,-.09], [.9,2.8,-3,.56,.08],
+    [-4.5,-.4,-5,.55,-.16], [4.5,-.3,-5,.55,.14],
+    [-2.2,3.3,-5,.42,-.1], [2.2,3.3,-5,.42,.1],
+    [-1.8,-2.5,-4,.55,-.08], [1.8,-2.5,-4,.55,.09],
+    [-3.5,2.5,-8,.52,-.11], [3.5,2.5,-8,.52,.11],
   ] : [
     [-6.9,.1,-4,.7,-.12], [6.9,.25,-4,.7,.12],
     [-5.2,.2,-.5,.84,-.12], [5.3,.3,-.7,.8,.1],
@@ -184,9 +189,17 @@ export function Universe({ paused, reset, onReady }: { paused: boolean; reset: n
     [-5.8,2.8,-5,.62,-.13], [6,2.6,-5,.63,.12],
     [-3.8,-1.9,-1,.7,-.07], [3.7,-1.7,-1,.72,.08],
     [-2,.3,-4,.75,-.07], [2,.3,-4,.75,.06],
+    [-8.9,.1,-5,.55,-.14], [8.9,.3,-6,.58,.13],
+    [-4.8,3.2,-7,.48,-.1], [4.9,3.1,-7,.48,.1],
+    [-7,3.9,-10,.5,-.12], [7.2,3.8,-10,.5,.12],
+    [-9,-2.4,-4,.55,-.14], [9,-2.2,-4,.55,.14],
+    [-4,-2.8,-5,.6,-.1], [4,-2.9,-5,.58,.1],
+    [-3.7,1.7,-7,.55,-.08], [3.8,1.8,-7,.56,.08],
+    [-11.5,.9,-11,.5,-.12], [11.5,.8,-11,.5,.12],
   ]
   return <>
     <Nebula/><ParticleSea mobile={mobile} paused={paused}/><GoldenOrb paused={paused}/>
+    <Html center position={[0,3.6,0]} style={{pointerEvents:'none'}}><span className="orb-initial" aria-label="J">J</span></Html>
     {arrangements.map(([x,y,z,s,t],i)=><Bouquet key={`${mobile}-${i}`} position={[x,y,z]} scale={s} tilt={t} paused={paused} index={i} bare={i >= (mobile ? 6 : 8) && i % 3 === 0}/>)}
     <Camera mobile={mobile} reset={reset}/>
   </>

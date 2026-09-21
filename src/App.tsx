@@ -25,6 +25,6 @@ export default function App() {
       <EffectComposer multisampling={0}><Bloom intensity={.65} luminanceThreshold={.8} luminanceSmoothing={.5} mipmapBlur/><Vignette eskil={false} offset={.25} darkness={.48}/></EffectComposer>
     </Canvas></SceneBoundary>
     {!ready && <p className="loading" role="status">Preparando tu universo…</p>}
-    <footer className="universe-footer"><p className="promise">Entre millones de estrellas,<br/><em>siempre te elegiría a vos.</em></p><div className="controls"><button aria-label={paused ? 'Animar universo' : 'Pausar animación'} aria-pressed={paused} onClick={()=>setPaused(p=>!p)}>{paused ? '▷' : 'Ⅱ'}</button><span className="desktop-hint">Arrastrá para girar <b>·</b> Botón derecho para moverte <b>·</b> Scroll para acercarte</span><span className="mobile-hint">Arrastrá · Pellizcá para acercarte</span><button aria-label="Restablecer vista" title="Restablecer vista" onClick={()=>setReset(r=>r+1)}>↺</button></div></footer>
+    <footer className="universe-footer"><div className="controls"><button aria-label={paused ? 'Animar universo' : 'Pausar animación'} aria-pressed={paused} onClick={()=>setPaused(p=>!p)}>{paused ? '▷' : 'Ⅱ'}</button><span className="desktop-hint">Arrastrá para girar <b>·</b> Botón derecho para moverte <b>·</b> Scroll para acercarte</span><span className="mobile-hint">Arrastrá · Pellizcá para acercarte</span><button aria-label="Restablecer vista" title="Restablecer vista" onClick={()=>setReset(r=>r+1)}>↺</button></div></footer>
   </main>
 }
