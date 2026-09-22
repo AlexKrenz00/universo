@@ -16,7 +16,7 @@ Arrastrar gira la cámara libremente; botón derecho o dos dedos desplazan la vi
 ## Escena
 
 - Orbe con shader de oro, iluminación direccional, borde luminoso y grabados botánicos generados localmente y proyectados sobre sus UV.
-- 48.000 partículas en escritorio y 24.000 en móvil, en una sola llamada de dibujo. Tamaño, luminosidad y transparencia varían con la profundidad.
+- 96.000 partículas en escritorio y 46.000 en móvil, en una sola llamada de dibujo. Forman cinco brazos espirales con polvo difuso; tamaño, luminosidad y transparencia varían con la profundidad.
 - Ramos variados de rosas, girasoles, tulipanes, margaritas y lirios, con marcos y oclusión real delante y detrás del orbe.
 - DPR limitado a 1,5, texturas WebP compartidas, animación sin actualizaciones de estado por fotograma y bloom moderado.
 - Encuadre independiente para móvil y cámara libre para explorar el universo desde cualquier ángulo.

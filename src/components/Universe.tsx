@@ -62,9 +62,9 @@ float noise(vec3 p){vec3 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(mi
 void main(){
 vec3 n=normalize(vNormal); float facing=max(dot(n,normalize(vView)),0.); float rim=pow(1.-facing,2.6);
 float light=max(dot(n,normalize(vec3(-.6,.8,1.))),0.); float cloud=noise(vPosition*2.5)+.45*noise(vPosition*7.);
-vec3 gold=mix(vec3(.065,.018,.009),vec3(.34,.125,.02),light*.8+cloud*.15);
-gold+=vec3(1.,.68,.19)*pow(light,18.)*.28;
-gold+=vec3(1.3,.75,.17)*rim;
+vec3 gold=mix(vec3(.045,.012,.006),vec3(.25,.082,.015),light*.8+cloud*.15);
+gold+=vec3(.8,.5,.13)*pow(light,18.)*.18;
+gold+=vec3(1.15,.62,.13)*rim;
 float line=texture2D(engraving,vUv).r;
 gold+=line*vec3(2.,1.35,.4)*(.65+.35*light);
 gold+=pow(noise(vPosition*95.),16.)*vec3(1.2,.7,.15);
@@ -83,43 +83,56 @@ function GoldenOrb({ paused }: { paused: boolean }) {
   </group>
 }
 const particleVertex = `uniform float time; uniform float pixelRatio; uniform float pointScale; attribute float seed; varying float vAlpha; varying vec3 vColor;
-void main(){vec3 p=position;p.y+=sin(time*.3+seed*50.+p.x*.2)*.065;vec4 mv=modelViewMatrix*vec4(p,1.);gl_Position=projectionMatrix*mv;
-gl_PointSize=clamp((30.+seed*76.)*pixelRatio*pointScale/-mv.z,1.,11.);vAlpha=(.4+.6*seed)*(1.-smoothstep(8.,65.,-mv.z));vColor=mix(vec3(1.,.38,.06),vec3(1.,.88,.36),seed);}`
-const particleFragment = `varying float vAlpha;varying vec3 vColor;void main(){float d=length(gl_PointCoord-.5);if(d>.5)discard;float a=exp(-d*d*22.);gl_FragColor=vec4(vColor*1.7,a*vAlpha);}`
+void main(){vec3 p=position;p.y+=sin(time*.3+seed*50.+p.x*.2)*.075;vec4 mv=modelViewMatrix*vec4(p,1.);gl_Position=projectionMatrix*mv;
+gl_PointSize=clamp((32.+seed*72.)*pixelRatio*pointScale/-mv.z,1.,10.);vAlpha=(.28+.72*seed)*(1.-smoothstep(30.,105.,-mv.z));vColor=mix(vec3(1.,.27,.015),vec3(1.,.76,.09),seed);}`
+const particleFragment = `varying float vAlpha;varying vec3 vColor;void main(){float d=length(gl_PointCoord-.5);if(d>.5)discard;float a=exp(-d*d*19.);gl_FragColor=vec4(vColor*1.75,a*vAlpha);}`
 function ParticleSea({ mobile, paused }: { mobile: boolean; paused: boolean }) {
   const material = useRef<THREE.ShaderMaterial>(null)
+  const sea = useRef<THREE.Points>(null)
   const { gl } = useThree()
   const [positions, seeds] = useMemo(() => {
-    const rand = random(1337), count = mobile ? 24000 : 48000
+    const rand = random(1337), count = mobile ? 46000 : 96000
     const p = new Float32Array(count * 3), s = new Float32Array(count)
     for (let i = 0; i < count; i++) {
-      const a = rand() * Math.PI * 2
-      const r = 3.3 + Math.pow(rand(), .8) * (i % 5 === 0 ? 35 : 17)
-      const band = Math.sin(r * 1.7 + a * 2) * .5 + .5
-      p[i * 3] = Math.cos(a) * r
-      p[i * 3 + 1] = -2.1 + rand() * .55 + Math.sin(a * 3 + r * .4) * .18
-      p[i * 3 + 2] = Math.sin(a) * r
-      s[i] = (.2 + rand() * .8) * (.4 + .6 * band)
+      const arm = i % 5
+      const r = 3.1 + Math.pow(rand(), 1.18) * (i % 3 === 0 ? 58 : 34)
+      const a = arm * Math.PI * .4 + r * .195 + (rand() + rand() + rand() - 1.5) * (.15 + r * .0033) * (i % 7 === 0 ? 1.8 : 1)
+      const radius = r + (rand() - .5) * (.22 + r * .025)
+      p[i * 3] = Math.cos(a) * radius
+      p[i * 3 + 1] = -2.15 + rand() * .42 + Math.sin(a * 2 + r * .22) * .12
+      p[i * 3 + 2] = Math.sin(a) * radius
+      s[i] = .45 + rand() * .55
+      if (i % 4 === 0) {
+        const dustAngle = rand() * Math.PI * 2
+        const dustRadius = 3.3 + Math.sqrt(rand()) * 60
+        p[i * 3] = Math.cos(dustAngle) * dustRadius
+        p[i * 3 + 2] = Math.sin(dustAngle) * dustRadius
+        s[i] = .18 + rand() * .42
+      }
     }
     return [p, s]
   }, [mobile])
   const uniforms = useMemo(() => ({time:{value:0},pixelRatio:{value:Math.min(gl.getPixelRatio(),1.5)},pointScale:{value:mobile ? 1.05 : 1}}),[gl,mobile])
-  useFrame((_, d) => { if (material.current && !paused) material.current.uniforms.time.value += d })
-  return <points frustumCulled={false}>
+  useFrame((_, d) => {
+    if (paused) return
+    if (material.current) material.current.uniforms.time.value += d
+    if (sea.current) sea.current.rotation.y += d * .006
+  })
+  return <points ref={sea} frustumCulled={false}>
     <bufferGeometry><bufferAttribute attach="attributes-position" args={[positions,3]}/><bufferAttribute attach="attributes-seed" args={[seeds,1]}/></bufferGeometry>
     <shaderMaterial ref={material} uniforms={uniforms} vertexShader={particleVertex} fragmentShader={particleFragment} transparent depthWrite={false} blending={THREE.AdditiveBlending}/>
   </points>
 }
 function Nebula() {
   const [positions, colors] = useMemo(() => {
-    const rand = random(903), p = new Float32Array(2800 * 3), c = new Float32Array(2800 * 3)
-    for(let i=0;i<2800;i++) {
+    const rand = random(903), p = new Float32Array(4000 * 3), c = new Float32Array(4000 * 3)
+    for(let i=0;i<4000;i++) {
       const y = (rand()-.5)*40, spread = (rand()+rand()+rand()-1.5)*6
-      p.set([y*.48+spread, y, -27-rand()*12], i*3)
-      c.set(i%5 ? [.35+rand()*.4,.08+rand()*.16,.24+rand()*.25] : [.9,.74,.58],i*3)
+      p.set([y*.44+spread+3, y, -27-rand()*12], i*3)
+      c.set(i%5 ? [.55+rand()*.4,.06+rand()*.12,.26+rand()*.3] : [1,.68,.58],i*3)
     } return [p,c]
   },[])
-  return <points><bufferGeometry><bufferAttribute attach="attributes-position" args={[positions,3]}/><bufferAttribute attach="attributes-color" args={[colors,3]}/></bufferGeometry><pointsMaterial size={.055} vertexColors transparent opacity={.7} depthWrite={false} blending={THREE.AdditiveBlending}/></points>
+  return <points><bufferGeometry><bufferAttribute attach="attributes-position" args={[positions,3]}/><bufferAttribute attach="attributes-color" args={[colors,3]}/></bufferGeometry><pointsMaterial size={.075} vertexColors transparent opacity={.8} depthWrite={false} blending={THREE.AdditiveBlending}/></points>
 }
 const bouquetVertex = `varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`
 const bouquetFragment = `uniform sampler2D picture;varying vec2 vUv;void main(){vec4 p=texture2D(picture,vUv);float a=smoothstep(.015,.1,max(p.r,max(p.g,p.b)));if(a<.02)discard;gl_FragColor=vec4(p.rgb*1.08,a);
@@ -202,8 +215,8 @@ export function Universe({ paused, reset, onReady }: { paused: boolean; reset: n
   const arrangements: [number,number,number,number,number][] = mobile ? [
     [-3.8,1.8,-3,.6,-.12], [3.8,1.8,-3,.6,.11],
     [-3.65,-.65,.5,.67,-.08], [3.65,-.65,.5,.67,.08],
-    [-1.75,-1.1,3.1,.62,-.06], [1.75,-1.1,3.1,.62,.06],
-    [0,-1.6,3.8,.53,0],
+    [-1.55,-.55,3.1,.65,-.06], [1.55,-.55,3.1,.65,.06],
+    [0,-1.3,3.8,.58,0],
     [-5.2,-1.2,-3,.52,-.1], [5.2,-1.2,-3,.52,.1],
     [-2.55,3,-5,.47,-.06], [2.55,3,-5,.47,.06],
     [-5.4,3,-7,.46,-.12], [5.4,3,-7,.46,.12],
@@ -215,8 +228,8 @@ export function Universe({ paused, reset, onReady }: { paused: boolean; reset: n
     [-6.8,-1,-1,.67,-.1], [6.8,-1,-1,.67,.1],
     [-4.5,.15,.2,.76,-.07], [4.5,.15,.2,.76,.07],
     [-3.25,-2,1.4,.8,-.06], [3.25,-2,1.4,.8,.06],
-    [-2,-1.15,3.3,.72,-.04], [2,-1.15,3.3,.72,.04],
-    [0,-1.55,4,.63,0],
+    [-1.8,-.55,3.3,.73,-.04], [1.8,-.55,3.3,.73,.04],
+    [0,-1.25,4,.67,0],
     [-9.7,3,-7,.46,-.1], [9.7,3,-7,.46,.1],
     [-9.2,-2,-5,.5,-.12], [9.2,-2,-5,.5,.12],
     [-8,-3.1,-6,.46,-.07], [8,-3.1,-6,.46,.07],
